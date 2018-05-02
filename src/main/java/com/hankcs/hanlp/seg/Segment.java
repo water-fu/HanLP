@@ -167,7 +167,7 @@ public abstract class Segment
             if (curType != preType)
             {
                 // 浮点数识别
-                if ((charArray[offsetAtom] == '.' || charArray[offsetAtom] == '．') && preType == CharType.CT_NUM)
+                if (preType == CharType.CT_NUM && "，,．.".indexOf(charArray[offsetAtom]) != -1)
                 {
                     if (offsetAtom+1 < end)
                     {
@@ -324,6 +324,56 @@ public abstract class Segment
             }
             wordNet[start] = new Vertex(sbTerm.toString(), value);
         }
+    }
+
+    /**
+     * 将一条路径转为最终结果
+     *
+     * @param vertexList
+     * @param offsetEnabled 是否计算offset
+     * @return
+     */
+    protected static List<Term> convert(List<Vertex> vertexList, boolean offsetEnabled)
+    {
+        assert vertexList != null;
+        assert vertexList.size() >= 2 : "这条路径不应当短于2" + vertexList.toString();
+        int length = vertexList.size() - 2;
+        List<Term> resultList = new ArrayList<Term>(length);
+        Iterator<Vertex> iterator = vertexList.iterator();
+        iterator.next();
+        if (offsetEnabled)
+        {
+            int offset = 0;
+            for (int i = 0; i < length; ++i)
+            {
+                Vertex vertex = iterator.next();
+                Term term = convert(vertex);
+                term.offset = offset;
+                offset += term.length();
+                resultList.add(term);
+            }
+        }
+        else
+        {
+            for (int i = 0; i < length; ++i)
+            {
+                Vertex vertex = iterator.next();
+                Term term = convert(vertex);
+                resultList.add(term);
+            }
+        }
+        return resultList;
+    }
+
+    /**
+     * 将节点转为term
+     *
+     * @param vertex
+     * @return
+     */
+    static Term convert(Vertex vertex)
+    {
+        return new Term(vertex.realWord, vertex.guessNature());
     }
 
     /**
